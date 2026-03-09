@@ -1,6 +1,7 @@
 FROM alpine/git:2.36.2 as download
 
 COPY builder/clone.sh /clone.sh
+RUN chmod +x /clone.sh
 
 RUN . /clone.sh taming-transformers https://github.com/CompVis/taming-transformers.git 24268930bf1dce879235a7fddd0b2355b84d7ea6 && \
     rm -rf data assets **/*.ipynb
@@ -19,7 +20,6 @@ FROM python:3.10.9-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_PREFER_BINARY=1 \
-    LD_PRELOAD=libtcmalloc.so \
     ROOT=/stable-diffusion-webui \
     PYTHONUNBUFFERED=1
 
@@ -33,11 +33,10 @@ RUN pip install torch torchvision torchaudio --index-url https://download.pytorc
 
 RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git && \
     cd stable-diffusion-webui && \
-    git reset --hard 89f9faa63388756314e8a1d96cf86bf5e0663045 && \
     pip install -r requirements_versions.txt
 
 COPY --from=download /repositories/ ${ROOT}/repositories/
-RUN mkdir ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/data/* ${ROOT}/interrogate
+RUN mkdir -p ${ROOT}/interrogate && cp ${ROOT}/repositories/clip-interrogator/data/* ${ROOT}/interrogate
 RUN pip install -r ${ROOT}/repositories/CodeFormer/requirements.txt
 
 COPY builder/requirements.txt /requirements.txt
@@ -45,25 +44,18 @@ RUN pip install --upgrade pip && \
     pip install --upgrade -r /requirements.txt --no-cache-dir && \
     rm /requirements.txt
 
-RUN cd stable-diffusion-webui && \
-    git fetch && \
-    git reset --hard 89f9faa63388756314e8a1d96cf86bf5e0663045 && \
-    pip install -r requirements_versions.txt
-
 # Download models from Civitai
 RUN mkdir -p /stable-diffusion-webui/models/Stable-diffusion && \
     wget -O /stable-diffusion-webui/models/Stable-diffusion/majicmixRealistic_v7.safetensors "https://civitai.com/api/download/models/176425" && \
     wget -O /stable-diffusion-webui/models/Stable-diffusion/photon_v1.safetensors "https://civitai.com/api/download/models/90072" && \
     wget -O /stable-diffusion-webui/models/Stable-diffusion/dreamshaper.safetensors "https://civitai.com/api/download/models/128713"
 
-ADD src .
-
-COPY builder/cache.py /stable-diffusion-webui/cache.py
-RUN cd /stable-diffusion-webui && python cache.py --use-cpu=all --ckpt /stable-diffusion-webui/models/Stable-diffusion/majicmixRealistic_v7.safetensors
+COPY src/handler.py /handler.py
+COPY src/start.sh /start.sh
+RUN chmod +x /start.sh
 
 RUN apt-get autoremove -y && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-RUN chmod +x /start.sh
-CMD /start.sh
+CMD ["/start.sh"]
