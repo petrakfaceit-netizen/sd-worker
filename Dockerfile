@@ -1,5 +1,8 @@
 FROM runpod/stable-diffusion:web-automatic-4.0.0
 
+# Install runpod handler
+RUN pip install runpod requests
+
 # Download models
 RUN wget -q -O /workspace/stable-diffusion-webui/models/Stable-diffusion/majicmixRealistic_v7.safetensors \
     "https://civitai.com/api/download/models/176425" && \
