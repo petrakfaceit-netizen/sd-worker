@@ -21,10 +21,10 @@ def wait_for_webui():
 
 # Start A1111
 proc = subprocess.Popen([
-    "python", "/stable-diffusion-webui/webui.py",
+    "python", "/workspace/stable-diffusion-webui/webui.py",
     "--nowebui", "--api", "--xformers",
     "--no-half-vae", "--skip-torch-cuda-test"
-], cwd="/stable-diffusion-webui")
+], cwd="/workspace/stable-diffusion-webui")
 
 print("Waiting for A1111...")
 wait_for_webui()
