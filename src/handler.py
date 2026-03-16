@@ -1,36 +1,41 @@
 import runpod
-import subprocess
 import requests
 import time
-import base64
 import os
+import subprocess
 
 WEBUI_URL = "http://127.0.0.1:7860"
 
-def wait_for_webui():
-    for i in range(180):
+def wait_for_webui(timeout=300):
+    print("Waiting for A1111 WebUI...")
+    for i in range(timeout):
         try:
-            r = requests.get(f"{WEBUI_URL}/sdapi/v1/sd-models", timeout=3)
+            r = requests.get(f"{WEBUI_URL}/sdapi/v1/sd-models", timeout=2)
             if r.status_code == 200:
-                print("A1111 ready!")
+                print(f"A1111 ready after {i}s!")
                 return True
         except:
             pass
-        time.sleep(2)
+        time.sleep(1)
+    print("A1111 failed to start!")
     return False
 
 # Start A1111
-proc = subprocess.Popen([
-    "python", "/workspace/stable-diffusion-webui/webui.py",
-    "--nowebui", "--api", "--xformers",
-    "--no-half-vae", "--skip-torch-cuda-test"
-], cwd="/workspace/stable-diffusion-webui")
+subprocess.Popen(
+    "cd /workspace/stable-diffusion-webui && ./webui.sh --nowebui --api --xformers --no-half-vae",
+    shell=True
+)
 
-print("Waiting for A1111...")
 wait_for_webui()
 
 def handler(job):
     inp = job.get("input", {})
+    
+    # Switch model if requested
+    model = inp.get("model")
+    if model:
+        requests.post(f"{WEBUI_URL}/sdapi/v1/options", json={"sd_model_checkpoint": model})
+        time.sleep(2)
     
     payload = {
         "prompt": inp.get("prompt", ""),
