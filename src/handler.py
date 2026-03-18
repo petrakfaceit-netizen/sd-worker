@@ -2,6 +2,7 @@ import runpod
 import requests
 import time
 import subprocess
+import os
 
 WEBUI_URL = "http://127.0.0.1:7860"
 
@@ -19,12 +20,18 @@ def wait_for_webui(timeout=300):
     print("A1111 failed to start!")
     return False
 
-# Start A1111
+# Remove root check from webui.sh and start A1111
 subprocess.Popen(
-    "cd /workspace/stable-diffusion-webui && python launch.py --nowebui --api --xformers --no-half-vae",
+    "cd /workspace/stable-diffusion-webui && "
+    "sed -i '/cannot be run as root/d' webui.sh && "
+    "sed -i '/can.t be run as root/d' webui.sh && "
+    "sed -i '/running as root/d' webui.sh && "
+    "sed -i '/\\$EUID.*0/d' webui.sh && "
+    "bash webui.sh --nowebui --api --xformers --no-half-vae --skip-install",
     shell=True
 )
 
+print("Waiting for A1111...")
 wait_for_webui()
 
 def handler(job):
