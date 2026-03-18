@@ -1,7 +1,6 @@
 import runpod
 import requests
 import time
-import os
 import subprocess
 
 WEBUI_URL = "http://127.0.0.1:7860"
@@ -22,7 +21,7 @@ def wait_for_webui(timeout=300):
 
 # Start A1111
 subprocess.Popen(
-    "cd /workspace/stable-diffusion-webui && ./webui.sh --nowebui --api --xformers --no-half-vae",
+    "cd /workspace/stable-diffusion-webui && python launch.py --nowebui --api --xformers --no-half-vae",
     shell=True
 )
 
