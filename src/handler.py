@@ -20,14 +20,9 @@ def wait_for_webui(timeout=300):
     print("A1111 failed to start!")
     return False
 
-# Remove root check from webui.sh and start A1111
+# Start A1111 with -f flag to allow running as root
 subprocess.Popen(
-    "cd /workspace/stable-diffusion-webui && "
-    "sed -i '/cannot be run as root/d' webui.sh && "
-    "sed -i '/can.t be run as root/d' webui.sh && "
-    "sed -i '/running as root/d' webui.sh && "
-    "sed -i '/\\$EUID.*0/d' webui.sh && "
-    "bash webui.sh --nowebui --api --xformers --no-half-vae --skip-install",
+    "cd /workspace/stable-diffusion-webui && bash webui.sh -f --nowebui --api --xformers --no-half-vae --skip-install",
     shell=True
 )
 
@@ -37,7 +32,6 @@ wait_for_webui()
 def handler(job):
     inp = job.get("input", {})
     
-    # Switch model if requested
     model = inp.get("model")
     if model:
         requests.post(f"{WEBUI_URL}/sdapi/v1/options", json={"sd_model_checkpoint": model})
